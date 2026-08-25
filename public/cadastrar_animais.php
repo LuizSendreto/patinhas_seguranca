@@ -1,6 +1,6 @@
 <php
 
-include"../infra/conexao.php";
+include"/infra/conexao.php";
 
 $nome = $_POST['nome'];
 $idade = $_POST['idade'];
