@@ -2,11 +2,18 @@
 
 include "infra/conexao.php";
 
-// Buscar clientes
-$clientes = mysqli_query($conexao, "SELECT * FROM usuarios");
+$sql_clientes = "SELECT * FROM usuarios ORDER BY nome";
+$clientes = mysqli_query($conexao, $sql_clientes);
 
-// Buscar animais
-$animais = mysqli_query($conexao, "SELECT * FROM animais");
+$sql_animais = "SELECT
+                    animais.*,
+                    usuarios.nome AS responsavel
+                FROM animais
+                INNER JOIN usuarios
+                    ON animais.cliente_id = usuarios.id
+                ORDER BY animais.nome";
+
+$animais = mysqli_query($conexao, $sql_animais);
 
 ?>
 
@@ -15,154 +22,126 @@ $animais = mysqli_query($conexao, "SELECT * FROM animais");
 
 <head>
     <meta charset="UTF-8">
-    <title>AUmigos - Pet Shop</title>
+    <title>AUmigos</title>
 </head>
 
 <body>
 
-    <h1>AUmigos</h1>
+<h1>AUmigos</h1>
 
-    <p>Pet Shop - Sistema de gerenciamento</p>
+<p>Sistema de gerenciamento de clientes e animais.</p>
 
-    <hr>
+<hr>
 
-    <h2>Menu</h2>
+<h2>Menu</h2>
 
-    <a href="index.php">Início</a> |
-    <a href="public/usuario.php">Clientes</a> |
-    <a href="public/listar_animais.php">Animais</a>
+<a href="index.php">Início</a> |
+<a href="public/usuario.php">Clientes</a> |
+<a href="public/listar_animais.php">Animais</a>
 
-    <hr>
+<hr>
 
-    <h2>Clientes</h2>
+<h2>Clientes</h2>
 
-    <p>
-        <a href="public/cadastrar_usuario.php">
-            Cadastrar Cliente
-        </a>
-    </p>
+<a href="public/cadastrar_usuario.php">
+    Cadastrar Cliente
+</a>
 
-    <?php
+<br><br>
 
-    if (mysqli_num_rows($clientes) > 0) {
+<table border="1" cellpadding="8">
 
-        echo "<table border='1' cellpadding='8'>";
+<tr>
+    <th>ID</th>
+    <th>Nome</th>
+    <th>Email</th>
+    <th>Ações</th>
+</tr>
 
-        echo "<tr>";
-        echo "<th>ID</th>";
-        echo "<th>Nome</th>";
-        echo "<th>Email</th>";
-        echo "</tr>";
+<?php while ($cliente = mysqli_fetch_assoc($clientes)): ?>
 
-        while ($cliente = mysqli_fetch_assoc($clientes)) {
+<tr>
 
-            echo "<tr>";
+<td><?php echo $cliente['id']; ?></td>
 
-            echo "<td>";
-            echo $cliente['id'];
-            echo "</td>";
+<td>
+    <?php echo htmlspecialchars($cliente['nome']); ?>
+</td>
 
-            echo "<td>";
-            echo htmlspecialchars($cliente['nome']);
-            echo "</td>";
+<td>
+    <?php echo htmlspecialchars($cliente['email']); ?>
+</td>
 
-            echo "<td>";
-            echo htmlspecialchars($cliente['email']);
-            echo "</td>";
+<td>
+    <a href="public/detalhes_usuario.php?id=<?php echo $cliente['id']; ?>">
+        Detalhes
+    </a>
+</td>
 
-            echo "</tr>";
-        }
+</tr>
 
-        echo "</table>";
+<?php endwhile; ?>
 
-    } else {
+</table>
 
-        echo "<p>Nenhum cliente cadastrado.</p>";
+<hr>
 
-    }
+<h2>Animais</h2>
 
-    ?>
-l
-    <hr>
+<a href="public/cadastrar_animais.php">
+    Cadastrar Animal
+</a>
 
-    <h2>Animais</h2>
+<br><br>
 
-    <p>
-        <a href="public/cadastrar_animais.php">
-            Cadastrar Animal
-        </a>
-    </p>
+<table border="1" cellpadding="8">
 
-    <?php
+<tr>
+    <th>ID</th>
+    <th>Nome</th>
+    <th>Espécie</th>
+    <th>Raça</th>
+    <th>Idade</th>
+    <th>Responsável</th>
+</tr>
 
-    if (mysqli_num_rows($animais) > 0) {
+<?php while ($animal = mysqli_fetch_assoc($animais)): ?>
 
-        echo "<table border='1' cellpadding='8'>";
+<tr>
 
-        echo "<tr>";
-        echo "<th>ID</th>";
-        echo "<th>Nome</th>";
-        echo "<th>Espécie</th>";
-        echo "<th>Raça</th>";
-        echo "<th>Idade</th>";
-        echo "</tr>";
+<td><?php echo $animal['id']; ?></td>
 
-        while ($animal = mysqli_fetch_assoc($animais)) {
+<td>
+    <?php echo htmlspecialchars($animal['nome']); ?>
+</td>
 
-            echo "<tr>";
+<td>
+    <?php echo htmlspecialchars($animal['especie']); ?>
+</td>
 
-            echo "<td>";
-            echo $animal['id'];
-            echo "</td>";
+<td>
+    <?php echo htmlspecialchars($animal['raca']); ?>
+</td>
 
-            echo "<td>";
-            echo htmlspecialchars($animal['nome']);
-            echo "</td>";
+<td>
+    <?php echo $animal['idade']; ?> anos
+</td>
 
-            echo "<td>";
-            echo htmlspecialchars($animal['especie']);
-            echo "</td>";
+<td>
+    <?php echo htmlspecialchars($animal['responsavel']); ?>
+</td>
 
-            echo "<td>";
-            echo htmlspecialchars($animal['raca']);
-            echo "</td>";
+</tr>
 
-            echo "<td>";
-            echo $animal['idade'];
-            echo " anos";
-            echo "</td>";
+<?php endwhile; ?>
 
-            echo "</tr>";
-        }
+</table>
 
-        echo "</table>";
+<hr>
 
-    } else {
-
-        echo "<p>Nenhum animal cadastrado.</p>";
-
-    }
-
-    ?>
-
-    <hr>
-
-    <h2>Informações</h2>
-
-    <p>
-        Sistema de gerenciamento da AUmigos.
-    </p>
-
-    <p>
-        Clientes cadastrados:
-        <?php echo mysqli_num_rows($clientes); ?>
-    </p>
-
-    <p>
-        Animais cadastrados:
-        <?php echo mysqli_num_rows($animais); ?>
-    </p>
+<p>
+    Sistema AUmigos - Cadastro de clientes e animais.
+</p>
 
 </body>
-
 </html>
