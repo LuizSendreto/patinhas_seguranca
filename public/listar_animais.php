@@ -15,7 +15,7 @@ $sql = "SELECT
             ON animais.cliente_id = usuarios.id
         ORDER BY animais.nome";
 
-$resultado = mysqli_query($conexao, $sql);
+
 
 ?>
 

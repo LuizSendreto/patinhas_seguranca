@@ -5,14 +5,7 @@ include "infra/conexao.php";
 $sql_clientes = "SELECT * FROM usuarios ORDER BY nome";
 $clientes = mysqli_query($conexao, $sql_clientes);
 
-$sql_animais = "SELECT
-                    animais.*,
-                    usuarios.nome AS responsavel
-                FROM animais
-                INNER JOIN usuarios
-                    ON animais.cliente_id = usuarios.id
-                ORDER BY animais.nome";
-
+$sql_animais = "SELECT * FROM animais ORDER BY nome";
 $animais = mysqli_query($conexao, $sql_animais);
 
 ?>
