@@ -2,123 +2,115 @@
 
 include "../infra/conexao.php";
 
-if (!isset($_GET["id"]) && !isset($_POST["id"])) {
-    header("Location: usuario.php");
-    exit;
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $id = $_POST["id"];
-    $nome = $_POST["nome"];
-    $especie = $_POST["especie"];
-    $raca = $_POST["raca"];
-    $idade = $_POST["idade"];
-    $descricao = $_POST["descricao"];
+    $nome = trim($_POST["nome"]);
+    $especie = trim($_POST["especie"]);
+    $raca = trim($_POST["raca"]);
+    $idade = intval($_POST["idade"]);
+    $descricao = trim($_POST["descricao"]);
+    $usuario_id = intval($_POST["usuario_id"]);
 
-    $sql = "UPDATE animais
-            SET nome = ?, especie = ?, raca = ?, idade = ?, descricao = ?
-            WHERE id = ?";
+    if (
+        empty($nome) ||
+        empty($especie) ||
+        empty($raca) ||
+        $idade < 0 ||
+        $usuario_id <= 0
+    ) {
+        die("Preencha os campos corretamente.");
+    }
 
-    $stmt = mysqli_prepare($conexao, $sql);
+    $sql = "INSERT INTO animais
+            (nome, especie, raca, idade, descricao, usuario_id)
+            VALUES (?, ?, ?, ?, ?, ?)";
 
-    mysqli_stmt_bind_param(
-        $stmt,
-        "sssis",
+    $stmt = $conexao->prepare($sql);
+
+    if (!$stmt) {
+        die("Erro ao preparar a consulta.");
+    }
+
+    $stmt->bind_param(
+        "sssisi",
         $nome,
         $especie,
         $raca,
         $idade,
         $descricao,
-        $id
+        $usuario_id
     );
 
-    mysqli_stmt_execute($stmt);
+    if ($stmt->execute()) {
+        echo "Animal cadastrado com sucesso!<br><br>";
+        echo '<a href="../index.php">Voltar</a>';
+    } else {
+        echo "Erro ao cadastrar animal.";
+    }
 
-    header("Location: usuario.php");
+    $stmt->close();
+    $conexao->close();
+
     exit;
 }
 
-$id = $_GET["id"];
+$sql = "SELECT id, nome FROM usuarios ORDER BY nome";
 
-$sql = "SELECT * FROM animais WHERE id = ?";
-
-$stmt = mysqli_prepare($conexao, $sql);
-
-mysqli_stmt_bind_param($stmt, "i", $id);
-
-mysqli_stmt_execute($stmt);
-
-$resultado = mysqli_stmt_get_result($stmt);
-
-$animal = mysqli_fetch_assoc($resultado);
-
-if (!$animal) {
-    die("Animal não encontrado.");
-}
+$resultado = $conexao->query($sql);
 
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Animal</title>
-</head>
-
-<body>
-
-<h1>Cadastrar Animal</h1>
+<h2>Cadastrar Animal</h2>
 
 <form method="POST">
 
-    <input type="hidden" name="id"
-           value="<?php echo $animal['id']; ?>">
-
-    <label>Nome:</label><br>
-
-    <input type="text"
-           name="nome"
-           value="<?php echo htmlspecialchars($animal['nome']); ?>"
-           required>
+    <label>Nome do animal:</label><br>
+    <input type="text" name="nome" required>
 
     <br><br>
 
     <label>Espécie:</label><br>
-
-    <input type="text"
-           name="especie"
-           value="<?php echo htmlspecialchars($animal['especie']); ?>"
-           required>
+    <input type="text" name="especie" required>
 
     <br><br>
 
     <label>Raça:</label><br>
-
-    <input type="text"
-           name="raca"
-           value="<?php echo htmlspecialchars($animal['raca']); ?>"
-           required>
+    <input type="text" name="raca" required>
 
     <br><br>
 
     <label>Idade:</label><br>
-
-    <input type="number"
-           name="idade"
-           value="<?php echo $animal['idade']; ?>"
-           required>
+    <input type="number" name="idade" min="0" required>
 
     <br><br>
 
-    <button type="submit">Salvar alterações</button>
+    <label>Descrição:</label><br>
+    <textarea name="descricao"></textarea>
+
+    <br><br>
+
+    <label>Responsável:</label><br>
+
+    <select name="usuario_id" required>
+
+        <option value="">Selecione o responsável</option>
+
+        <?php while ($usuario = $resultado->fetch_assoc()): ?>
+
+            <option value="<?= $usuario["id"] ?>">
+                <?= htmlspecialchars($usuario["nome"]) ?>
+            </option>
+
+        <?php endwhile; ?>
+
+    </select>
+
+    <br><br>
+
+    <button type="submit">Cadastrar animal</button>
 
 </form>
 
 <br>
 
-<a href="usuario.php">Voltar</a>
-
-</body>
-</html>
+<a href="../index.php">Voltar</a>

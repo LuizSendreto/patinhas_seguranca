@@ -2,157 +2,150 @@
 
 include "../infra/conexao.php";
 
-if (!isset($_GET["id"]) && !isset($_POST["id"])) {
-    header("Location: listar_animais.php");
-    exit;
+if (!isset($_GET["id"]) || !is_numeric($_GET["id"])) {
+    die("ID inválido.");
 }
+
+$id = intval($_GET["id"]);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $id = $_POST["id"];
-    $nome = $_POST["nome"];
-    $idade = $_POST["idade"];
-    $especie = $_POST["especie"];
-    $raca = $_POST["raca"];
-    $descricao = $_POST["descricao"];
-    $cliente_id = $_POST["cliente_id"];
+    $nome = trim($_POST["nome"]);
+    $especie = trim($_POST["especie"]);
+    $raca = trim($_POST["raca"]);
+    $idade = intval($_POST["idade"]);
+    $descricao = trim($_POST["descricao"]);
+    $usuario_id = intval($_POST["usuario_id"]);
 
-    if (empty($cliente_id)) {
-        die("É obrigatório selecionar um responsável.");
+    if (
+        empty($nome) ||
+        empty($especie) ||
+        empty($raca) ||
+        $idade < 0 ||
+        $usuario_id <= 0
+    ) {
+        die("Preencha os campos corretamente.");
     }
 
     $sql = "UPDATE animais
             SET nome = ?,
-                idade = ?,
                 especie = ?,
                 raca = ?,
+                idade = ?,
                 descricao = ?,
-                cliente_id = ?
+                usuario_id = ?
             WHERE id = ?";
 
-    $stmt = mysqli_prepare($conexao, $sql);
+    $stmt = $conexao->prepare($sql);
 
-    mysqli_stmt_bind_param(
-        $stmt,
-        "sisssii",
+    $stmt->bind_param(
+        "sssisis",
         $nome,
-        $idade,
         $especie,
         $raca,
+        $idade,
         $descricao,
-        $cliente_id,
+        $usuario_id,
         $id
     );
 
-    mysqli_stmt_execute($stmt);
+    if ($stmt->execute()) {
+        echo "Animal atualizado com sucesso!<br><br>";
+        echo '<a href="listar_animais.php">Voltar para animais</a>';
+    } else {
+        echo "Erro ao atualizar animal.";
+    }
 
-    header("Location: listar_animais.php");
+    $stmt->close();
+    $conexao->close();
+
     exit;
 }
 
-$id = $_GET["id"];
-
 $sql = "SELECT * FROM animais WHERE id = ?";
 
-$stmt = mysqli_prepare($conexao, $sql);
+$stmt = $conexao->prepare($sql);
 
-mysqli_stmt_bind_param($stmt, "i", $id);
+$stmt->bind_param("i", $id);
 
-mysqli_stmt_execute($stmt);
+$stmt->execute();
 
-$resultado = mysqli_stmt_get_result($stmt);
+$resultado = $stmt->get_result();
 
-$animal = mysqli_fetch_assoc($resultado);
+$animal = $resultado->fetch_assoc();
 
 if (!$animal) {
     die("Animal não encontrado.");
 }
 
-$clientes = mysqli_query(
-    $conexao,
-    "SELECT id, nome FROM usuarios ORDER BY nome"
-);
+$sqlUsuarios = "SELECT id, nome FROM usuarios ORDER BY nome";
+
+$usuarios = $conexao->query($sqlUsuarios);
 
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Editar Animal</title>
-</head>
-
-<body>
-
-<h1>Editar Animal</h1>
+<h2>Editar Animal</h2>
 
 <form method="POST">
 
-    <input type="hidden"
-           name="id"
-           value="<?php echo $animal['id']; ?>">
-
     <label>Nome:</label><br>
-
-    <input type="text"
-           name="nome"
-           value="<?php echo htmlspecialchars($animal['nome']); ?>"
-           required>
+    <input
+        type="text"
+        name="nome"
+        value="<?= htmlspecialchars($animal["nome"]) ?>"
+        required
+    >
 
     <br><br>
 
     <label>Espécie:</label><br>
-
-    <input type="text"
-           name="especie"
-           value="<?php echo htmlspecialchars($animal['especie']); ?>"
-           required>
+    <input
+        type="text"
+        name="especie"
+        value="<?= htmlspecialchars($animal["especie"]) ?>"
+        required
+    >
 
     <br><br>
 
     <label>Raça:</label><br>
-
-    <input type="text"
-           name="raca"
-           value="<?php echo htmlspecialchars($animal['raca']); ?>"
-           required>
+    <input
+        type="text"
+        name="raca"
+        value="<?= htmlspecialchars($animal["raca"]) ?>"
+        required
+    >
 
     <br><br>
 
     <label>Idade:</label><br>
-
-    <input type="number"
-           name="idade"
-           value="<?php echo $animal['idade']; ?>"
-           min="0"
-           required>
+    <input
+        type="number"
+        name="idade"
+        min="0"
+        value="<?= $animal["idade"] ?>"
+        required
+    >
 
     <br><br>
 
     <label>Descrição:</label><br>
 
-    <textarea name="descricao"><?php
-        echo htmlspecialchars($animal['descricao']);
-    ?></textarea>
+    <textarea name="descricao"><?= htmlspecialchars($animal["descricao"]) ?></textarea>
 
     <br><br>
 
     <label>Responsável:</label><br>
 
-    <select name="cliente_id" required>
+    <select name="usuario_id" required>
 
-        <?php while ($cliente = mysqli_fetch_assoc($clientes)): ?>
+        <?php while ($usuario = $usuarios->fetch_assoc()): ?>
 
             <option
-                value="<?php echo $cliente['id']; ?>"
-                <?php
-                if ($cliente['id'] == $animal['cliente_id']) {
-                    echo "selected";
-                }
-                ?>
+                value="<?= $usuario["id"] ?>"
+                <?= $usuario["id"] == $animal["usuario_id"] ? "selected" : "" ?>
             >
-                <?php echo htmlspecialchars($cliente['nome']); ?>
+                <?= htmlspecialchars($usuario["nome"]) ?>
             </option>
 
         <?php endwhile; ?>
@@ -168,6 +161,3 @@ $clientes = mysqli_query(
 <br>
 
 <a href="listar_animais.php">Voltar</a>
-
-</body>
-</html>

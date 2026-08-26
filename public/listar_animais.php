@@ -4,105 +4,95 @@ include "../infra/conexao.php";
 
 $sql = "SELECT
             animais.id,
-            animais.nome,
+            animais.nome AS animal,
             animais.especie,
             animais.raca,
             animais.idade,
             animais.descricao,
-            usuarios.nome AS responsavel
+            usuarios.nome AS responsavel,
+            usuarios.email
         FROM animais
         INNER JOIN usuarios
-            ON animais.cliente_id = usuarios.id
+            ON animais.usuario_id = usuarios.id
         ORDER BY animais.nome";
 
-
+$resultado = $conexao->query($sql);
 
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
+<h2>Animais cadastrados</h2>
 
-<head>
-    <meta charset="UTF-8">
-    <title>Animais - AUmigos</title>
-</head>
+<a href="../index.php">Voltar</a>
 
-<body>
+<br><br>
 
-<h1>Animais</h1>
+<table border="1">
 
-<a href="../index.php">Início</a> |
-<a href="cadastrar_animais.php">Cadastrar Animal</a> |
-<a href="usuario.php">Clientes</a>
+    <tr>
+        <th>ID</th>
+        <th>Animal</th>
+        <th>Espécie</th>
+        <th>Raça</th>
+        <th>Idade</th>
+        <th>Descrição</th>
+        <th>Responsável</th>
+        <th>E-mail</th>
+        <th>Ações</th>
+    </tr>
 
-<hr>
+    <?php while ($animal = $resultado->fetch_assoc()): ?>
 
-<?php if (mysqli_num_rows($resultado) > 0): ?>
+        <tr>
 
-<table border="1" cellpadding="8">
+            <td>
+                <?= $animal["id"] ?>
+            </td>
 
-<tr>
-    <th>ID</th>
-    <th>Nome</th>
-    <th>Espécie</th>
-    <th>Raça</th>
-    <th>Idade</th>
-    <th>Responsável</th>
-    <th>Ações</th>
-</tr>
+            <td>
+                <?= htmlspecialchars($animal["animal"]) ?>
+            </td>
 
-<?php while ($animal = mysqli_fetch_assoc($resultado)): ?>
+            <td>
+                <?= htmlspecialchars($animal["especie"]) ?>
+            </td>
 
-<tr>
+            <td>
+                <?= htmlspecialchars($animal["raca"]) ?>
+            </td>
 
-<td><?php echo $animal['id']; ?></td>
+            <td>
+                <?= $animal["idade"] ?>
+            </td>
 
-<td>
-    <?php echo htmlspecialchars($animal['nome']); ?>
-</td>
+            <td>
+                <?= htmlspecialchars($animal["descricao"]) ?>
+            </td>
 
-<td>
-    <?php echo htmlspecialchars($animal['especie']); ?>
-</td>
+            <td>
+                <?= htmlspecialchars($animal["responsavel"]) ?>
+            </td>
 
-<td>
-    <?php echo htmlspecialchars($animal['raca']); ?>
-</td>
+            <td>
+                <?= htmlspecialchars($animal["email"]) ?>
+            </td>
 
-<td>
-    <?php echo $animal['idade']; ?> anos
-</td>
+            <td>
 
-<td>
-    <?php echo htmlspecialchars($animal['responsavel']); ?>
-</td>
+                <a href="editar_animais.php?id=<?= $animal["id"] ?>">
+                    Editar
+                </a>
 
-<td>
+                |
 
-<a href="editar_animais.php?id=<?php echo $animal['id']; ?>">
-    Editar
-</a>
+                <a href="excluir_animais.php?id=<?= $animal["id"] ?>"
+                   onclick="return confirm('Deseja realmente excluir este animal?');">
+                    Excluir
+                </a>
 
-|
+            </td>
 
-<a href="excluir_animais.php?id=<?php echo $animal['id']; ?>"
-   onclick="return confirm('Deseja realmente excluir este animal?');">
-    Excluir
-</a>
+        </tr>
 
-</td>
-
-</tr>
-
-<?php endwhile; ?>
+    <?php endwhile; ?>
 
 </table>
-
-<?php else: ?>
-
-<p>Nenhum animal cadastrado.</p>
-
-<?php endif; ?>
-
-</body>
-</html>

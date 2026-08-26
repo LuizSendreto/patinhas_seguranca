@@ -2,20 +2,31 @@
 
 include "../infra/conexao.php";
 
-if (!isset($_GET["id"])) {
-    header("Location: listar_animais.php");
-    exit;
+if (!isset($_GET["id"]) || !is_numeric($_GET["id"])) {
+    die("ID inválido.");
 }
 
-$id = $_GET["id"];
+$id = intval($_GET["id"]);
 
 $sql = "DELETE FROM animais WHERE id = ?";
 
-$stmt = mysqli_prepare($conexao, $sql);
+$stmt = $conexao->prepare($sql);
 
-mysqli_stmt_bind_param($stmt, "i", $id);
+$stmt->bind_param("i", $id);
 
-mysqli_stmt_execute($stmt);
+if ($stmt->execute()) {
 
-header("Location: listar_animais.php");
-exit;
+    echo "Animal excluído com sucesso!<br><br>";
+
+} else {
+
+    echo "Erro ao excluir animal.";
+
+}
+
+$stmt->close();
+$conexao->close();
+
+?>
+
+<a href="listar_animais.php">Voltar para animais</a>

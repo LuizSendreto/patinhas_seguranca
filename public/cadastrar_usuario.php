@@ -4,42 +4,40 @@ include "../infra/conexao.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $nome = $_POST["nome"];
-    $email = $_POST["email"];
-    $senha = password_hash($_POST["senha"], PASSWORD_DEFAULT);
+    $nome = trim($_POST["nome"]);
+    $email = trim($_POST["email"]);
+    $senha = $_POST["senha"];
 
-    $sql = "INSERT INTO usuarios (nome, email, senha)
-            VALUES (?, ?, ?)";
+    if (empty($nome) || empty($email) || empty($senha)) {
+        die("Preencha todos os campos.");
+    }
 
-    $stmt = mysqli_prepare($conexao, $sql);
+    $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-    mysqli_stmt_bind_param(
-        $stmt,
-        "sss",
-        $nome,
-        $email,
-        $senha
-    );
+    $sql = "INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)";
 
-    mysqli_stmt_execute($stmt);
+    $stmt = $conexao->prepare($sql);
 
-    header("Location: usuario.php");
-    exit;
+    if (!$stmt) {
+        die("Erro ao preparar a consulta.");
+    }
+
+    $stmt->bind_param("sss", $nome, $email, $senha_hash);
+
+    if ($stmt->execute()) {
+        echo "Cliente cadastrado com sucesso!<br><br>";
+        echo '<a href="../index.php">Voltar</a>';
+    } else {
+        echo "Erro ao cadastrar cliente.";
+    }
+
+    $stmt->close();
+    $conexao->close();
 }
 
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Cliente</title>
-</head>
-
-<body>
-
-<h1>Cadastrar Cliente</h1>
+<h2>Cadastrar Cliente</h2>
 
 <form method="POST">
 
@@ -48,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <br><br>
 
-    <label>Email:</label><br>
+    <label>E-mail:</label><br>
     <input type="email" name="email" required>
 
     <br><br>
@@ -64,7 +62,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <br>
 
-<a href="usuario.php">Voltar</a>
-
-</body>
-</html>
+<a href="../index.php">Voltar</a>
